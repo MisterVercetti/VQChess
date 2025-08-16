@@ -94,6 +94,7 @@ var kingSquare = [
 ];
 var fullClock = 0, halfClock = 0;
 var doubleMove = true;
+var doubleMoveInterval = 4;
 
 // Load the position from the given FEN string
 function loadFromFEN(fen) {
@@ -1048,7 +1049,7 @@ async function nextTurn() {
     if(currentColor != WHITE || !doubleMove) playerTurn = !playerTurn;
     if(doubleMove) doubleMove = false;
 
-    if(fullClock % 5 === 0 && currentColor == WHITE && !doubleMove) {
+    if(fullClock % (doubleMoveInterval + 1) === 0 && currentColor == WHITE && !doubleMove) {
         doubleMove = true;
     }
 
@@ -1083,7 +1084,9 @@ function updateUIData() {
         }
     }
     // Update PGN text area
-    document.getElementById("pgn-text").value = PGN;
+    // document.getElementById("pgn-text").value = getFEN();
+    if(doubleMove) document.getElementById("pgn-text").value = "DOUBLE MOVE!!!"
+    else document.getElementById("pgn-text").value = ""
 }
 
 // Populate the local list with the current position's legal moves
@@ -1164,12 +1167,12 @@ function changeDepth() {
 }
 
 // Copy PGN text to clip board
-function copyPGN() {
-    let taPGN = document.getElementById("pgn-text");
-    taPGN.setSelectionRange(0, 99999);
-    document.execCommand("copy");
-    alert("Copied PGN");
-}
+// function copyPGN() {
+//     let taPGN = document.getElementById("pgn-text");
+//     taPGN.setSelectionRange(0, 99999);
+//     document.execCommand("copy");
+//     alert("Copied FEN");
+// }
 
 // ----------------------------------- DRIVER CODE -----------------------------------------
 

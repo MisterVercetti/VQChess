@@ -53,13 +53,13 @@ html {
     margin-left: 0px;
     padding: 5px;
     width: 635px;
-    height: 100px;
+    height: 40px;
     resize: none;
     align-content: center;
     background-color: #0b967d;
     border: 2px solid black;
     color: #c1f7ee;
-    font-size: 20px;
+    font-size: 25px;
 }
 .game-features textarea::-webkit-scrollbar {
     width: 1em;
