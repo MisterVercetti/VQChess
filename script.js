@@ -92,8 +92,8 @@ var kingSquare = [
     undefined, undefined, undefined, undefined, undefined, undefined, undefined,
     undefined      // 8
 ];
-var fullClock = 1, halfClock = 0;
-var whiteDoubleMove = true;
+var fullClock = 0, halfClock = 0;
+var doubleMove = true;
 
 // Load the position from the given FEN string
 function loadFromFEN(fen) {
@@ -188,11 +188,10 @@ function performMove(move) {
     enPassantSquare = undefined;
     if(takenpiece === NO_PIECE){
         if(move.doublepush) {
-            if(whiteDoubleMove) {
-
+            if(!doubleMove) {
+                if(currentColor === WHITE) enPassantSquare = { file: to.file, rank: to.rank - 1 };
+                else enPassantSquare = { file: to.file, rank: to.rank + 1 };
             }
-            else if(currentColor === WHITE) enPassantSquare = { file: to.file, rank: to.rank - 1 };
-            else enPassantSquare = { file: to.file, rank: to.rank + 1 };
         }
         else if(move.enpassant) {
             if(currentColor === WHITE) board[to.rank - 1][to.file] = NO_PIECE;
@@ -222,11 +221,7 @@ function performMove(move) {
     board[from.rank][from.file] = NO_PIECE;
     board[to.rank][to.file] = move.promotion === NO_PIECE ? movedpiece : (currentColor | move.promotion);
 
-    if(whiteDoubleMove) whiteDoubleMove = false;
-    else {
-        if(currentColor == BLACK) whiteDoubleMove = true;
-        currentColor ^= BLACK;
-    }
+    if(!doubleMove) currentColor ^= BLACK;
 }
 
 // Reverse the given move on the board
@@ -1050,9 +1045,12 @@ function appendPGN(notation) {
 }
 
 async function nextTurn() {
-    //playerTurn = !playerTurn;
-    if(halfClock % 3 === 2) playerTurn = false;
-    else playerTurn = true;
+    if(currentColor != WHITE || !doubleMove) playerTurn = !playerTurn;
+    if(doubleMove) doubleMove = false;
+
+    if(fullClock % 5 === 0 && currentColor == WHITE && !doubleMove) {
+        doubleMove = true;
+    }
 
     if(!playerTurn) {
         setTimeout(() => {
@@ -1091,7 +1089,7 @@ function updateUIData() {
 // Populate the local list with the current position's legal moves
 function getLegalMoves() {
     currentGameMoves = generateMoves();
-    if(!whiteDoubleMove && currentColor == WHITE) {
+    if(!doubleMove && currentColor == WHITE) {
         for(let i = 0; i < currentGameMoves.length; i++) {
             performMove(currentGameMoves[i]);
             let remove = false;
