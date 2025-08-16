@@ -188,7 +188,10 @@ function performMove(move) {
     enPassantSquare = undefined;
     if(takenpiece === NO_PIECE){
         if(move.doublepush) {
-            if(currentColor === WHITE) enPassantSquare = { file: to.file, rank: to.rank - 1 };
+            if(whiteDoubleMove) {
+
+            }
+            else if(currentColor === WHITE) enPassantSquare = { file: to.file, rank: to.rank - 1 };
             else enPassantSquare = { file: to.file, rank: to.rank + 1 };
         }
         else if(move.enpassant) {
@@ -1088,16 +1091,18 @@ function updateUIData() {
 // Populate the local list with the current position's legal moves
 function getLegalMoves() {
     currentGameMoves = generateMoves();
-    // for(let i = 0; i < currentGameMoves.length; i++) {
-    //     performMove(currentGameMoves[i]);
-    //     let remove = false;
-    //     if(isSquareAttackedBySide(currentColor, kingSquare[currentColor ^ BLACK])) remove = true;
-    //     unperformMove(currentGameMoves[i]);
-    //     if(remove) {
-    //         currentGameMoves.splice(i, 1);
-    //         i--;
-    //     }
-    // }
+    if(!whiteDoubleMove && currentColor == WHITE) {
+        for(let i = 0; i < currentGameMoves.length; i++) {
+            performMove(currentGameMoves[i]);
+            let remove = false;
+            if(isSquareAttackedBySide(currentColor, kingSquare[currentColor ^ BLACK])) remove = true;
+            unperformMove(currentGameMoves[i]);
+            if(remove) {
+                currentGameMoves.splice(i, 1);
+                i--;
+            }
+        }
+    }
 }
 
 // Perform user move
