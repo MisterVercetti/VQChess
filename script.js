@@ -135,6 +135,35 @@ function loadFromFEN(fen) {
     enPassantSquare = parseSquare(fenFragments[3]);
 }
 
+// Get FEN string for current board position
+function getFEN() {
+    let fen = "";
+    for(let r = 7; r >= 0; r--) {
+        let empty = 0;
+        for(let f = 0; f < 8; f++) {
+            piece = board[r][f];
+            if(piece == NO_PIECE) empty++;
+            else {
+                if(empty != 0) {
+                    fen += empty;
+                    empty = 0;
+                }
+                let type = PIECE_STRING_LUT[getPieceType(piece)];
+                let color = getPieceColor(piece);
+                if(color == BLACK) type = type.toLowerCase();
+                fen += type;
+            }
+        }
+        if(empty != 0) fen += empty;
+        if(r > 0) fen += "/";
+    }
+
+    let color = currentColor == WHITE ? "w" : "b";
+    let epSquare = enPassantSquare !== undefined ? (FILE_TO_STRING[enPassantSquare.file]) + RANK_TO_STRING[enPassantSquare.rank]: "-";
+    fen += " " + color + " " + castlingRightsToString() + " " + epSquare + " " + halfClock + " " + fullClock;
+    return fen;
+}
+
 // Perform the given move on the board
 function performMove(move) {
     let from = move.from;
@@ -884,9 +913,40 @@ function minimaxSearch(depth, maxDepth, alpha, beta) {
 
 // Search for the best move in the given position
 function searchPosition(depth) {
-    console.log(depth);
     currentBestMove = undefined;
-    return minimaxSearch(depth, depth, -INF_SCORE, INF_SCORE);
+
+    const xhttpr = new XMLHttpRequest();
+    let fen = getFEN();
+    console.log(depth);
+    xhttpr.open('GET', 'https://stockfish.online/api/s/v2.php?fen=' + fen + "&depth=" + depth, true);
+    xhttpr.send();
+    xhttpr.onload = ()=> {
+        if(xhttpr.status === 200) {
+            const response = JSON.parse(xhttpr.response);
+            let result = response.bestmove.split(" ")[1];
+            let fromFile = FILE_LUT[result.charAt(0)];
+            let fromRank = RANK_LUT[result.charAt(1)];
+            let toFile = FILE_LUT[result.charAt(2)];
+            let toRank = RANK_LUT[result.charAt(3)];
+            let moves = generateMoves();
+            for(let i = 0; i < moves.length; i++) {
+                let move = moves[i];
+                if(move.from.file === fromFile &&
+                   move.from.rank === fromRank &&
+                   move.to.file === toFile &&
+                   move.to.rank === toRank
+                ) {
+                    currentBestMove = move;
+                    makeMoveOnBoard(currentBestMove);
+                    return;
+                }
+            }
+
+            alert("WHOOPS SOMETHING BAD HAPPENED IM GONNA *** NOW!!!");
+        } else {
+            alert("WHOOPS SOMETHING BAD HAPPENED IM GONNA *** NOW!!!");
+        }
+    };
 }
 
 // ----------------------------------- UI CONTROL -----------------------------------------
@@ -896,7 +956,7 @@ var PGN = "";
 var currentGameMoves = [];
 var selectedSquare = undefined;
 var playerTurn = true;
-var botDepth = 4;
+var botDepth = document.getElementById("depth-select").value;
 
 const PIECE_IMG_SRC = [
     ["WK", "WQ", "WB", "WN", "WR", "WP"],     // 0
@@ -983,11 +1043,10 @@ function appendPGN(notation) {
 
 async function nextTurn() {
     playerTurn = !playerTurn;
+
     if(!playerTurn) {
         setTimeout(() => {
-            let score = searchPosition(botDepth);
-            if(currentBestMove === undefined) console.log("Game over");
-            else makeMoveOnBoard(currentBestMove);
+            searchPosition(botDepth);
         }, 10);
     }
 }
@@ -1043,6 +1102,7 @@ function makeMoveOnBoard(move) {
         updateUIData();
         getLegalMoves();
         if(currentColor === WHITE) fullClock++;
+	    halfClock++;
         nextTurn();
     }
 }
