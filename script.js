@@ -93,6 +93,7 @@ var kingSquare = [
     undefined      // 8
 ];
 var fullClock = 1, halfClock = 0;
+var whiteDoubleMove = true;
 
 // Load the position from the given FEN string
 function loadFromFEN(fen) {
@@ -218,7 +219,11 @@ function performMove(move) {
     board[from.rank][from.file] = NO_PIECE;
     board[to.rank][to.file] = move.promotion === NO_PIECE ? movedpiece : (currentColor | move.promotion);
 
-    currentColor ^= BLACK;
+    if(whiteDoubleMove) whiteDoubleMove = false;
+    else {
+        if(currentColor == BLACK) whiteDoubleMove = true;
+        currentColor ^= BLACK;
+    }
 }
 
 // Reverse the given move on the board
@@ -956,7 +961,7 @@ var PGN = "";
 var currentGameMoves = [];
 var selectedSquare = undefined;
 var playerTurn = true;
-var botDepth = document.getElementById("depth-select").value;
+var botDepth = 0;
 
 const PIECE_IMG_SRC = [
     ["WK", "WQ", "WB", "WN", "WR", "WP"],     // 0
@@ -1030,19 +1035,21 @@ function getGameOver() {
 function appendPGN(notation) {
     if(currentColor === BLACK) PGN += fullClock + ". ";
     PGN += notation;
-    if(getGameOver()) {
-        if(isSquareAttackedBySide(currentColor ^ BLACK, kingSquare[currentColor])) {
-            PGN += "#";
-            alert("CHECKMATE");
-        }
-        else alert("STALEMATE");
-    }
-    else if(isSquareAttackedBySide(currentColor ^ BLACK, kingSquare[currentColor])) PGN += "+";
+    // if(getGameOver()) {
+    //     if(isSquareAttackedBySide(currentColor ^ BLACK, kingSquare[currentColor])) {
+    //         PGN += "#";
+    //         alert("CHECKMATE");
+    //     }
+    //     else alert("STALEMATE");
+    // }
+    // else if(isSquareAttackedBySide(currentColor ^ BLACK, kingSquare[currentColor])) PGN += "+";
     PGN += " ";
 }
 
 async function nextTurn() {
-    playerTurn = !playerTurn;
+    //playerTurn = !playerTurn;
+    if(halfClock % 3 === 2) playerTurn = false;
+    else playerTurn = true;
 
     if(!playerTurn) {
         setTimeout(() => {
@@ -1081,16 +1088,16 @@ function updateUIData() {
 // Populate the local list with the current position's legal moves
 function getLegalMoves() {
     currentGameMoves = generateMoves();
-    for(let i = 0; i < currentGameMoves.length; i++) {
-        performMove(currentGameMoves[i]);
-        let remove = false;
-        if(isSquareAttackedBySide(currentColor, kingSquare[currentColor ^ BLACK])) remove = true;
-        unperformMove(currentGameMoves[i]);
-        if(remove) {
-            currentGameMoves.splice(i, 1);
-            i--;
-        }
-    }
+    // for(let i = 0; i < currentGameMoves.length; i++) {
+    //     performMove(currentGameMoves[i]);
+    //     let remove = false;
+    //     if(isSquareAttackedBySide(currentColor, kingSquare[currentColor ^ BLACK])) remove = true;
+    //     unperformMove(currentGameMoves[i]);
+    //     if(remove) {
+    //         currentGameMoves.splice(i, 1);
+    //         i--;
+    //     }
+    // }
 }
 
 // Perform user move
